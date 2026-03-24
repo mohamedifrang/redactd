@@ -1,3 +1,3 @@
-CREATE DATABASE review_db;
-CREATE DATABASE job_db;
-CREATE DATABASE company_db;
+CREATE DATABASE verdict_db;
+CREATE DATABASE content_db;
+CREATE DATABASE platform_db;

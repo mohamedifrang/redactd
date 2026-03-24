@@ -5,7 +5,7 @@ services:
     container_name: my_postgres_db
     restart: unless-stopped
     environment:
-      # POSTGRES_DB: jobappdb
+      # POSTGRES_DB: redactd_db
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password # Change this in production
       PGDATA: /data/postgres
@@ -46,7 +46,7 @@ services:
       - ./pgadmin/servers.json:/pgadmin4/servers.json:ro  # mount the file read-only
   
   config-server:
-    image: rishav235/config-server:latest
+    image: saadhtiwana/config-server:latest
     container_name: config-server
     ports:
       - 8080:8080
@@ -59,7 +59,7 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
 
   servicereg:
-    image: rishav235/service-registry:latest
+    image: saadhtiwana/service-registry:latest
     container_name: servicereg
     ports:
       - 8761:8761
@@ -72,9 +72,9 @@ services:
       - postgres
       - pgadmin
 
-  companyms:
-    image: rishav235/companyms:latest
-    container_name: companyms
+  platformms:
+    image: saadhtiwana/platformms:latest
+    container_name: platformms
     ports:
       - 8081:8081
     networks:
@@ -86,9 +86,9 @@ services:
     environment:
     - SPRING_PROFILES_ACTIVE=docker
 
-  jobms:
-    image: rishav235/jobms:latest
-    container_name: jobms
+  contentms:
+    image: saadhtiwana/contentms:latest
+    container_name: contentms
     ports:
       - 8082:8082
     networks:
@@ -100,9 +100,9 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
 
-  reviewms:
-    image: rishav235/reviewms:latest
-    container_name: reviewms
+  verdictms:
+    image: saadhtiwana/verdictms:latest
+    container_name: verdictms
     ports:
       - 8083:8083
     networks:
@@ -115,7 +115,7 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
 
   api-gateway:
-    image: rishav235/api-gateway:latest
+    image: saadhtiwana/api-gateway:latest
     container_name: api-gateway
     ports:
       - 8084:8084

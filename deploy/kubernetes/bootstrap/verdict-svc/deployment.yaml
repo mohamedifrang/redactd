@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: verdict-svc
+  namespace: redactd
+  labels:
+    app: verdict-svc
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: verdict-svc
+      labels:
+        app: verdict-svc
+    spec:
+      containers:
+        - name: verdict-svc
+          image: saadhtiwana/verdict-svc:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8083
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: k8s
+      restartPolicy: Always
+  selector:
+    matchLabels:
+      app: verdict-svc

@@ -1,428 +1,271 @@
 <div align="center">
 
-# 🕸️ hiremesh
+# REDACTD
 
-**Production-grade microservices architecture for job platforms**
+### A production-style moderation platform built for real-world distributed systems engineering
 
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2+-brightgreen.svg)](https://spring.io/projects/spring-boot)
-[![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2023.0+-blue.svg)](https://spring.io/projects/spring-cloud)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.12%20LTS-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2025.0.0-0ea5e9?logo=spring&logoColor=white)](https://spring.io/projects/spring-cloud)
+[![Java](https://img.shields.io/badge/Java-17-ef4444?logo=openjdk&logoColor=white)](https://www.oracle.com/java/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-1f6feb?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![RabbitMQ](https://img.shields.io/badge/RabbitMQ-3.13-ff6600?logo=rabbitmq&logoColor=white)](https://www.rabbitmq.com/)
+[![Tracing](https://img.shields.io/badge/Tracing-Zipkin-f59e0b)](https://zipkin.io/)
 
-*Building hiring platforms the way Netflix builds streaming platforms*
-
-[Architecture](#-architecture) • [Quick Start](#-quick-start) • [Services](#-service-catalog) • [Observability](#-observability--resilience) • [Deploy](#-deployment)
+[Why This Project](#why-this-project) · [Architecture](#architecture) · [Services](#service-catalog) · [Run It](#quick-start) · [Deployment](#deployment) · [Roadmap](#roadmap)
 
 </div>
 
 ---
 
-## 🎯 What is hiremesh?
+## Why This Project
 
-**hiremesh** is a **learning-optimized**, **portfolio-grade** backend demonstrating how modern companies architect job platforms at scale.
+`redactd` is not a toy CRUD app. It is a complex backend that demonstrates how modern moderation systems are built when correctness, scale, and operability matter.
 
-This isn't a toy project. It's a **reference implementation** of:
-- ✅ Microservices with clear bounded contexts
-- ✅ Event-driven architecture (async messaging)
-- ✅ Service mesh patterns (discovery, config, gateway)
-- ✅ Observability-first design (tracing, metrics)
-- ✅ Resilience patterns (circuit breakers, retries)
+It combines:
 
-> **Think:** LinkedIn's job platform architecture, but explained for engineers who want to *actually understand* how it works.
+- Clear domain boundaries with independently deployable services
+- Mixed communication patterns (sync REST + async events)
+- Operational essentials (discovery, centralized config, tracing)
+- An architecture that stands up in serious technical reviews
 
----
+This repository is designed to communicate engineering maturity quickly and clearly.
 
-## 🏗️ Architecture
+## System Design Principles
 
-### Service Topology
+- **Domain ownership first:** each service owns its model and lifecycle
+- **Async where it counts:** event-driven updates for cross-service consistency
+- **Observability by design:** traces are first-class, not post-fix tooling
+- **Failure-aware architecture:** built for partial failure, not happy-path demos
+- **Deployment-ready structure:** local Docker and Kubernetes manifests included
+
+## Architecture
 
 ```mermaid
-graph TB
-    Client[Client Apps]
-    
-    Client --> Edge[edge-gateway<br/>:8084]
-    
-    Edge --> Company[company-svc<br/>:8081]
-    Edge --> Job[job-svc<br/>:8082]
-    Edge --> Review[review-svc<br/>:8083]
-    
-    Company --> DB1[(PostgreSQL<br/>companies)]
-    Job --> DB2[(PostgreSQL<br/>jobs)]
-    Review --> DB3[(PostgreSQL<br/>reviews)]
-    
-    Company -.->|OpenFeign| Job
-    Company -.->|OpenFeign| Review
-    
-    Review -->|Events| MQ[RabbitMQ]
-    Company -->|Events| MQ
-    MQ --> Company
-    MQ --> Review
-    
-    Company --> Eureka[eureka-svc<br/>:8761]
-    Job --> Eureka
-    Review --> Eureka
-    Edge --> Eureka
-    
-    Company --> Config[config-svc<br/>:8080]
-    Job --> Config
-    Review --> Config
-    Edge --> Config
-    
-    Company -.->|Traces| Zipkin[Zipkin<br/>:9411]
-    Job -.->|Traces| Zipkin
-    Review -.->|Traces| Zipkin
-    
-    style Edge fill:#ff6b6b,stroke:#c92a2a,color:#fff
-    style Eureka fill:#4dabf7,stroke:#1971c2,color:#fff
-    style Config fill:#51cf66,stroke:#2f9e44,color:#fff
-    style MQ fill:#ffd43b,stroke:#f59f00,color:#000
-    style Zipkin fill:#e599f7,stroke:#9c36b5,color:#fff
+flowchart LR
+    client[Client Applications] --> gateway[edge-gateway :8084]
+
+    gateway --> platform[platform-svc :8081]
+    gateway --> content[content-svc :8082]
+    gateway --> verdict[verdict-svc :8083]
+
+    platform --> db[(PostgreSQL :5432)]
+    content --> db
+    verdict --> db
+
+    platform -. service discovery .-> eureka[eureka-svc :8761]
+    content -. service discovery .-> eureka
+    verdict -. service discovery .-> eureka
+    gateway -. service discovery .-> eureka
+
+    platform -. externalized config .-> config[config-svc :8080]
+    content -. externalized config .-> config
+    verdict -. externalized config .-> config
+    gateway -. externalized config .-> config
+
+    verdict -- verdict events --> mq[(RabbitMQ :5672)]
+    platform -- domain events --> mq
+    mq -- subscriptions --> platform
+    mq -- subscriptions --> verdict
+
+    platform -. traces .-> zipkin[Zipkin :9411]
+    content -. traces .-> zipkin
+    verdict -. traces .-> zipkin
+    gateway -. traces .-> zipkin
 ```
 
-### Communication Patterns
+## Moderation Pipeline
 
-| Pattern | Use Case | Implementation |
-|---------|----------|----------------|
-| **Sync (Request/Response)** | Read aggregation | OpenFeign (Company → Jobs/Reviews) |
-| **Async (Event-Driven)** | Cross-service updates | RabbitMQ + Spring AMQP |
-| **Service Discovery** | Dynamic routing | Eureka (Netflix OSS) |
-| **Centralized Config** | Environment-agnostic deploys | Spring Cloud Config |
-| **Distributed Tracing** | Request flow visualization | Micrometer + Zipkin |
-
-### Event Flows
-
-#### 📝 Review Lifecycle
-```
-[Review Created/Updated/Deleted]
-    ↓
-  RabbitMQ Event
-    ↓
-  Company Service
-    ↓
-  Recalculates avg rating + review count
-    ↓
-  Stores aggregate in DB
+```text
+1) Content enters through content-svc
+2) Verdict decisions are created/updated in verdict-svc
+3) Domain events are emitted to RabbitMQ
+4) platform-svc consumes events and updates aggregate moderation metrics
+5) Aggregated state is exposed through gateway-facing APIs
 ```
 
-#### 🏢 Company Deletion
-```
-[Company Deleted]
-    ↓
-  RabbitMQ Event
-    ↓
-  Review Service
-    ↓
-  Deletes all associated reviews
-    ↓
-  Emits ReviewDeleted events (triggers cascades)
-```
+This workflow demonstrates eventual consistency with explicit business events, which is the right tradeoff for scalable moderation workloads.
 
----
+## Service Catalog
 
-## 📦 Service Catalog
+| Service | Port | Role |
+| --- | ---: | --- |
+| `edge-gateway` | 8084 | Single ingress, routing, edge concerns |
+| `platform-svc` | 8081 | Platform metadata and moderation aggregates |
+| `content-svc` | 8082 | Content ingestion and lifecycle management |
+| `verdict-svc` | 8083 | Moderation verdict lifecycle and event publishing |
+| `config-svc` | 8080 | Centralized configuration management |
+| `eureka-svc` | 8761 | Service registration and discovery |
 
-<table>
-<thead>
-  <tr>
-    <th>Service</th>
-    <th>Port</th>
-    <th>Purpose</th>
-    <th>Tech Stack</th>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td><strong>edge-gateway</strong></td>
-    <td>8084</td>
-    <td>API Gateway (single entry point)</td>
-    <td>Spring Cloud Gateway (WebFlux)</td>
-  </tr>
-  <tr>
-    <td><strong>company-svc</strong></td>
-    <td>8081</td>
-    <td>Company CRUD + review aggregates</td>
-    <td>Spring Boot + JPA + PostgreSQL</td>
-  </tr>
-  <tr>
-    <td><strong>job-svc</strong></td>
-    <td>8082</td>
-    <td>Job postings management</td>
-    <td>Spring Boot + JPA + PostgreSQL</td>
-  </tr>
-  <tr>
-    <td><strong>review-svc</strong></td>
-    <td>8083</td>
-    <td>Reviews + event publishing</td>
-    <td>Spring Boot + JPA + RabbitMQ</td>
-  </tr>
-  <tr>
-    <td><strong>eureka-svc</strong></td>
-    <td>8761</td>
-    <td>Service registry & discovery</td>
-    <td>Eureka Server (Netflix OSS)</td>
-  </tr>
-  <tr>
-    <td><strong>config-svc</strong></td>
-    <td>8080</td>
-    <td>Centralized configuration</td>
-    <td>Spring Cloud Config</td>
-  </tr>
-</tbody>
-</table>
+### Supporting Infrastructure
 
-### Infrastructure Components
+| Component | Port(s) | Role |
+| --- | ---: | --- |
+| PostgreSQL | 5432 | System of record |
+| RabbitMQ | 5672, 15672 | Event broker and management UI |
+| Zipkin | 9411 | Distributed tracing |
+| pgAdmin | 5050 | Database administration UI |
 
-| Component | Port(s) | Purpose |
-|-----------|---------|---------|
-| **PostgreSQL** | 5432 | Persistent storage (one DB per service) |
-| **RabbitMQ** | 5672 / 15672 | Event bus + Management UI |
-| **Zipkin** | 9411 | Distributed tracing UI |
-| **pgAdmin** | 5050 | Database admin interface |
-
----
-
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
-```bash
-# Required
-- Docker + Docker Compose
-- Git
 
-# Optional (for local dev without Docker)
+- Docker and Docker Compose
 - Java 17+
 - Maven 3.8+
-```
 
-### Option 1: Full Stack (Docker Compose) — **Recommended**
-
-```bash
-# Clone the repo
-git clone https://github.com/saadhtiwana/hiremesh.git
-cd hiremesh
-
-# Start everything
-docker-compose up --build
-
-# Watch logs
-docker-compose logs -f
-```
-
-**🌐 Access Points:**
-- **Eureka Dashboard:** http://localhost:8761 (see all registered services)
-- **Zipkin Traces:** http://localhost:9411 (visualize request flows)
-- **RabbitMQ Management:** http://localhost:15672 (user: `guest` / pass: `guest`)
-- **pgAdmin:** http://localhost:5050 (db explorer)
-- **API Gateway:** http://localhost:8084 (your API entry point)
-
-### Option 2: Local Development (Maven)
+### Clone and Run Full Stack
 
 ```bash
-# 1. Start infrastructure only
-docker-compose up postgres rabbitmq zipkin -d
-
-# 2. Start services in order
-cd eureka-svc && mvn spring-boot:run -Dspring-boot.run.profiles=dev &
-cd ../config-svc && mvn spring-boot:run -Dspring-boot.run.profiles=dev &
-cd ../company-svc && mvn spring-boot:run -Dspring-boot.run.profiles=dev &
-cd ../job-svc && mvn spring-boot:run -Dspring-boot.run.profiles=dev &
-cd ../review-svc && mvn spring-boot:run -Dspring-boot.run.profiles=dev &
-cd ../edge-gateway && mvn spring-boot:run -Dspring-boot.run.profiles=dev &
+git clone https://github.com/<your-username>/redactd.git
+cd redactd
+docker compose up --build
 ```
 
----
+### Local Endpoints
 
-## 🧪 Testing the System
+- Gateway: http://localhost:8084
+- Eureka Dashboard: http://localhost:8761
+- Zipkin: http://localhost:9411
+- RabbitMQ Management: http://localhost:15672
+- pgAdmin: http://localhost:5050
 
-### Health Checks
+## Local Development Workflow
+
+Start infrastructure:
+
 ```bash
-# Check if all services registered with Eureka
-curl http://localhost:8761/eureka/apps | grep -i "<app>"
-
-# Gateway health
-curl http://localhost:8084/actuator/health
+docker compose up postgres rabbitmq zipkin pgadmin -d
 ```
 
-### Sample API Calls (via Gateway)
+Start services (recommended order):
+
 ```bash
-# Create a company
-curl -X POST http://localhost:8084/companies \
+cd eureka-svc && mvn spring-boot:run
+cd ../config-svc && mvn spring-boot:run
+cd ../platform-svc && mvn spring-boot:run
+cd ../content-svc && mvn spring-boot:run
+cd ../verdict-svc && mvn spring-boot:run
+cd ../edge-gateway && mvn spring-boot:run
+```
+
+## API Smoke Tests
+
+```bash
+# 1) create platform
+curl -X POST http://localhost:8084/platforms \
   -H "Content-Type: application/json" \
-  -d '{"name": "TechCorp", "description": "AI Startup"}'
+  -d '{"name":"CreatorHub","type":"FORUM","description":"high-volume moderation domain"}'
 
-# Create a job
-curl -X POST http://localhost:8084/jobs \
+# 2) create content
+curl -X POST http://localhost:8084/contents \
   -H "Content-Type: application/json" \
-  -d '{"title": "Senior Backend Engineer", "companyId": 1}'
+  -d '{"platformId":1,"title":"Sample Post","body":"Flagged content candidate","authorId":"user_42","flagReason":"abuse","severity":"HIGH"}'
 
-# Create a review (triggers event to update company rating)
-curl -X POST http://localhost:8084/reviews \
+# 3) create verdict
+curl -X POST "http://localhost:8084/verdicts?platformId=1" \
   -H "Content-Type: application/json" \
-  -d '{"companyId": 1, "rating": 4.5, "comment": "Great culture!"}'
+  -d '{"contentId":1,"decision":"REMOVED","moderatorNote":"policy violation","reasoning":"guideline-4"}'
 
-# Get company with aggregated rating
-curl http://localhost:8084/companies/1
+# 4) verify aggregate view
+curl http://localhost:8084/platforms/1
 ```
 
-### Observe Event Flow
-1. Open **RabbitMQ Management UI** → Queues
-2. Create a review via API
-3. Watch `reviewQueue` get a message
-4. Check **Zipkin** → see the trace span from `review-svc` → `company-svc`
+## Observability
 
----
+Tracing is integrated across gateway and core services.
 
-## 🔭 Observability & Resilience
+Use Zipkin to validate cross-service execution paths and latency boundaries:
 
-### Distributed Tracing (Zipkin)
-
-Every request gets a **trace ID** that follows it across services:
-
-```
-edge-gateway → company-svc → job-svc
-                           ↘
-                            review-svc
+```text
+edge-gateway -> platform-svc -> content-svc
+                          -> verdict-svc
 ```
 
-Open **Zipkin** → Search by service → See latency breakdown per hop.
+This makes runtime behavior inspectable and auditable in real engineering reviews.
 
-### Resilience Patterns (Resilience4j)
+## Deployment
 
-Configured where needed:
-- **Circuit Breaker:** Fail fast if downstream service is down
-- **Retry:** Auto-retry transient failures
-- **Rate Limiter:** Prevent resource exhaustion
-
-Example (in `company-svc`):
-```yaml
-resilience4j:
-  circuitbreaker:
-    instances:
-      companyBreaker:
-        slidingWindowSize: 10
-        failureRateThreshold: 50
-```
-
----
-
-## ☸️ Deployment
-
-### Kubernetes
-
-Manifests are in `deploy/kubernetes/`:
+Kubernetes manifests are available under `deploy/kubernetes`.
 
 ```bash
-# 1. Create namespace
+# namespace
 kubectl apply -f deploy/kubernetes/namespace.yaml
 
-# 2. Deploy infrastructure
+# infrastructure
 kubectl apply -f deploy/kubernetes/postgres/
 kubectl apply -f deploy/kubernetes/rabbitmq/
 kubectl apply -f deploy/kubernetes/zipkin/
 
-# 3. Deploy services
-kubectl apply -f deploy/kubernetes/bootstrap/company-svc/
-kubectl apply -f deploy/kubernetes/bootstrap/job-svc/
-kubectl apply -f deploy/kubernetes/bootstrap/review-svc/
-
-# 4. Expose gateway
-kubectl port-forward svc/edge-gateway 8084:8084 -n hiremesh
+# services
+kubectl apply -f deploy/kubernetes/bootstrap/platformms/
+kubectl apply -f deploy/kubernetes/bootstrap/contentms/
+kubectl apply -f deploy/kubernetes/bootstrap/verdictms/
 ```
 
-### Production Checklist
+## Recent Updates (Latest Release)
 
-Before deploying to prod:
+**v2.0.0** — Architecture Modernization & Engineering Excellence
 
-- [ ] Replace default passwords in `docker-compose.yaml`
-- [ ] Use specific image tags (no `latest`)
-- [ ] Enable HTTPS (TLS termination at gateway)
-- [ ] Set resource limits (CPU/memory) in K8s
-- [ ] Add health checks for all services
-- [ ] Configure log aggregation (ELK/Loki)
-- [ ] Set up metrics (Prometheus + Grafana)
-- [ ] Add authentication (OAuth2/JWT)
-- [ ] Implement rate limiting at gateway
-- [ ] Add API documentation (Swagger/OpenAPI)
+- **Spring Boot Upgrade:** Updated from 3.5.6 to 3.5.12 LTS with latest security patches
+- **Spring Cloud 2025.0.0:** Latest microservices orchestration framework
+- **Namespace Migration:** Removed legacy "jobapp" naming → unified under `com.redactd` package structure
+- **Mapper Refactoring:** Migrated from MapStruct annotations to explicit Spring `@Component` mapper implementation for improved control and testability
+- **Database Alignment:** Corrected database names across all layers:
+  - `platform_db` for platform service
+  - `content_db` for content service
+  - `verdict_db` for verdict service
+- **Kubernetes Manifests Audit:** Updated service naming and configuration references for consistency
+- **Dependency Management:** Leveraged Spring Cloud BOM for simplified, conflict-free dependency versioning
+- **Verified Compilation:** All modules compile successfully with zero warnings (`BUILD SUCCESS`)
 
----
 
-## 📂 Repository Structure
+## Production Hardening Checklist
 
+- [ ] Replace development credentials and secrets
+- [ ] Pin immutable image tags
+- [ ] Enforce TLS at the edge
+- [ ] Set CPU and memory requests/limits per service
+- [ ] Add authentication and authorization (JWT/OAuth2)
+- [ ] Add metrics stack (Prometheus/Grafana)
+- [ ] Add centralized logs (ELK/Loki)
+- [ ] Add service-level alerts and SLOs
+
+## Repository Structure
+
+```text
+redactd/
+|-- edge-gateway/
+|-- platform-svc/
+|-- content-svc/
+|-- verdict-svc/
+|-- eureka-svc/
+|-- config-svc/
+|-- deploy/kubernetes/
+|-- scripts/
+|-- pgadmin/
+|-- docker-compose.yaml
+`-- README.md
 ```
-hiremesh/
-├── edge-gateway/          # API Gateway (Spring Cloud Gateway)
-├── company-svc/           # Company domain service
-├── job-svc/               # Job domain service
-├── review-svc/            # Review domain service
-├── eureka-svc/            # Service registry (Eureka)
-├── config-svc/            # Config server (Spring Cloud Config)
-├── deploy/
-│   └── kubernetes/        # K8s manifests
-├── scripts/               # DB init scripts
-├── pgadmin/               # pgAdmin config
-├── docker-compose.yaml    # Local stack orchestration
-└── README.md
-```
 
----
+## Roadmap
 
-## 🗺️ Roadmap
+- [ ] Auth service with RBAC-aware moderation actions
+- [ ] Idempotent consumers and dead-letter queue strategy
+- [ ] Contract testing for service APIs and events
+- [ ] Policy engine integration for rule-based moderation
+- [ ] CI pipeline with quality gates and deployment promotion
 
-Future enhancements (PRs welcome!):
+## Contributing
 
-- [ ] **Authentication Service** (JWT/OAuth2 with Spring Security)
-- [ ] **Centralized Logging** (ELK Stack or Grafana Loki)
-- [ ] **Metrics Dashboard** (Prometheus + Grafana)
-- [ ] **Saga Pattern** (distributed transactions with compensation)
-- [ ] **API Documentation** (Swagger UI per service)
-- [ ] **Contract Testing** (Spring Cloud Contract)
-- [ ] **Chaos Engineering** (Chaos Monkey for Spring Boot)
-- [ ] **GraphQL Gateway** (as alternative to REST)
+High-quality contributions are welcome.
 
----
+1. Create a focused branch.
+2. Keep service boundaries explicit.
+3. Preserve event contracts and payload compatibility.
+4. Add verification notes (commands and expected results).
 
-## 🤝 Contributing
+## Final Note
 
-Contributions are welcome! Here's how:
+`redactd` is built to signal engineering readiness: thoughtful boundaries, observable behavior, and architecture decisions that hold up under scrutiny.
 
-1. Fork the repo
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
----
-
-## 📚 Learning Resources
-
-Want to dive deeper? Check these out:
-
-- [Spring Cloud Documentation](https://spring.io/projects/spring-cloud)
-- [Microservices Patterns (Chris Richardson)](https://microservices.io/patterns/index.html)
-- [Domain-Driven Design](https://martinfowler.com/bliki/DomainDrivenDesign.html)
-- [12-Factor App Methodology](https://12factor.net/)
-- [Building Microservices (Sam Newman)](https://www.oreilly.com/library/view/building-microservices-2nd/9781492034018/)
-
----
-
-## 📜 License
-
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
----
-
-## 💬 Questions?
-
-- **Issues:** [GitHub Issues](https://github.com/saadhtiwana/hiremesh/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/saadhtiwana/hiremesh/discussions)
-- **Contact:** [@saadhtiwana](https://github.com/saadhtiwana)
-
----
-
-<div align="center">
-
-**Built with ☕ by [Saad Tiwana](https://github.com/saadhtiwana)**
-
-⭐ Star this repo if you found it helpful!
-
-</div>
+The codebase is organized so implementation quality and systems thinking are visible at a glance.

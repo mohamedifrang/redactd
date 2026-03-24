@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: content-svc
+  namespace: redactd
+spec:
+  selector:
+    app: content-svc
+  ports:
+    - port: 80
+      targetPort: 8082

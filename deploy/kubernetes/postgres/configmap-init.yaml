@@ -2,9 +2,9 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: postgres-init
-  namespace: jobapp
+  namespace: redactd
 data:
   init.sql: |
-    CREATE DATABASE company_db;
-    CREATE DATABASE job_db;
-    CREATE DATABASE review_db;
+    CREATE DATABASE platform_db;
+    CREATE DATABASE content_db;
+    CREATE DATABASE verdict_db;

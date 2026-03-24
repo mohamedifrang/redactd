@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: content-svc
+  namespace: redactd
+  labels:
+    app: content-svc
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: content-svc
+      labels:
+        app: content-svc
+    spec:
+      containers:
+        - name: content-svc
+          image: saadhtiwana/content-svc:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8082
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: k8s
+      restartPolicy: Always
+  selector:
+    matchLabels:
+      app: content-svc
